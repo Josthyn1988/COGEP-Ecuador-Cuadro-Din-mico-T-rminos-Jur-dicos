@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COGEP - Cuadro Dinámico de Términos y Procedimientos - UBE</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 50%, #f87171 100%);
+            min-height: 100vh;
+        }
+        
+        @media print {
+            body { 
+                margin: 0; 
+                padding: 10px; 
+                background: white !important;
+                min-height: auto;
+            }
+            .no-print { display: none !important; }
+            .term-card { break-inside: avoid; margin-bottom: 10px; }
+            .grid { display: block !important; }
+            .grid .term-card { display: block; width: 100%; margin: 0 0 15px 0; }
+        }
+        
+        .term-card { 
+            transition: all 0.3s ease; 
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(220, 38, 38, 0.2);
+        }
+        .term-card:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 20px 40px rgba(220, 38, 38, 0.3);
+        }
+        .search-highlight { background-color: #fef3c7; }
+        
+        .ube-header {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ube-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M30 30c0-11.046-8.954-20-20-20s-20 8.954-20 20 8.954 20 20 20 20-8.954 20-20zm0 0c0 11.046 8.954 20 20 20s20-8.954 20-20-8.954-20-20-20-20 8.954-20 20z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+            opacity: 0.1;
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        .ecuador-flag {
+            background: linear-gradient(to bottom, #FFD700 33.33%, #0066CC 33.33%, #0066CC 66.66%, #CC0000 66.66%);
+            height: 6px;
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .ube-logo {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #ffffff 0%, #fee2e2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            color: #dc2626;
+        }
+        
+        .team-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 5px solid #dc2626;
+            backdrop-filter: blur(10px);
+        }
+        
+        .justice-icon {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .category-principios { border-left-color: #dc2626 !important; }
+        .category-procedimientos { border-left-color: #b91c1c !important; }
+        .category-terminos { border-left-color: #991b1b !important; }
+        .category-plazos { border-left-color: #ef4444 !important; }
+        
+        .filter-btn {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transition: all 0.3s ease;
+        }
+        .filter-btn:hover {
+            background: linear-gradient(135deg, #b91c1c, #991b1b);
+            transform: translateY(-1px);
+        }
+        
+        .content-wrapper {
+            max-width: none;
+            padding: 0 20px;
+        }
+        
+        @media screen {
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="content-wrapper">
+        <!-- Header Institucional UBE -->
+        <div class="ube-header text-white p-6 rounded-lg mb-6 relative">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="flex items-center space-x-4">
+                    <div class="ube-logo">
+                        UBE
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">Universidad Bolivariana del Ecuador</h1>
+                        <p class="text-red-100">Facultad de Jurisprudencia</p>
+                        <div class="ecuador-flag"></div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-4xl mb-2">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <p class="text-sm text-red-100">Excelencia Académica</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Grupo -->
+        <div class="team-card rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold text-red-800 mb-4 flex items-center">
+                <i class="fas fa-users mr-3 text-red-600"></i>
+                Grupo de Trabajo N.º 1
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                <div class="bg-red-50 p-3 rounded-lg border-l-4 border-red-600">
+                    <p class="font-semibold text-red-800">Yandry Alcívar Arteaga</p>
+                </div>
+                <div class="bg-red-50 p-3 rounded-lg border-l-4 border-red-600">
+                    <p class="font-semibold text-red-800">Mariela Guillermina Ávila Rivera</p>
+                </div>
+                <div class="bg-red-50 p-3 rounded-lg border-l-4 border-red-600">
+                    <p class="font-semibold text-red-800">Verónica Elizabeth Alajo Saquinga</p>
+                </div>
+                <div class="bg-red-50 p-3 rounded-lg border-l-4 border-red-600">
+                    <p class="font-semibold text-red-800">Miguel Salazar Suárez</p>
+                </div>
+                <div class="bg-red-50 p-3 rounded-lg border-l-4 border-red-600">
+                    <p class="font-semibold text-red-800">Hugo Darwin Cóndor Jami</p>
+                </div>
+                <div class="bg-red-50 p-3 rounded-lg border-l-4 border-red-600">
+                    <p class="font-semibold text-red-800">Cristhian Andrés Sánchez Ordoñez</p>
+                </div>
+                <div class="bg-red-50 p-3 rounded-lg border-l-4 border-red-600">
+                    <p class="font-semibold text-red-800">Josthyn Josué Noboa Jácome</p>
+                </div>
+                <div class="bg-red-50 p-3 rounded-lg border-l-4 border-red-600">
+                    <p class="font-semibold text-red-800">Johanna Stephany Solórzano Garcés</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Título Principal -->
+        <div class="text-center mb-6 bg-white rounded-lg shadow-lg p-6">
+            <h1 class="text-4xl font-bold text-red-900 mb-2 justice-icon">
+                <i class="fas fa-gavel mr-3"></i>COGEP - Código Orgánico General de Procesos
+            </h1>
+            <h2 class="text-2xl text-red-700 font-semibold">Cuadro Dinámico de Términos y Procedimientos</h2>
+            <div class="flex items-center justify-center mt-4 space-x-6 text-red-600">
+                <div class="flex items-center">
+                    <i class="fas fa-map-marker-alt mr-2"></i>
+                    <span>República del Ecuador</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-balance-scale mr-2"></i>
+                    <span>Corte Nacional de Justicia</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-calendar mr-2"></i>
+                    <span>2024</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles de Búsqueda y Filtros -->
+        <div class="bg-white rounded-lg shadow-lg p-4 mb-6 no-print">
+            <div class="flex flex-wrap gap-4 items-center">
+                <div class="flex-1 min-w-64">
+                    <input type="text" id="searchInput" placeholder="Buscar términos, artículos o definiciones..." 
+                           class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                </div>
+                <div class="flex gap-2 flex-wrap">
+                    <button onclick="filterByCategory('all')" class="filter-btn text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-list mr-1"></i>Todos
+                    </button>
+                    <button onclick="filterByCategory('principios')" class="filter-btn text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-balance-scale mr-1"></i>Principios
+                    </button>
+                    <button onclick="filterByCategory('procedimientos')" class="filter-btn text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-cogs mr-1"></i>Procedimientos
+                    </button>
+                    <button onclick="filterByCategory('terminos')" class="filter-btn text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-book mr-1"></i>Términos
+                    </button>
+                    <button onclick="filterByCategory('plazos')" class="filter-btn text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-clock mr-1"></i>Plazos
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="grid" id="contentGrid">
+            
+            <!-- PRINCIPIOS PROCESALES -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-principios" data-category="principios">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-balance-scale mr-2"></i>Principios Procesales
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Art. 3 - Dirección del proceso:</strong> El juez controla las actividades procesales y evita dilaciones.</div>
+                    <div><strong class="text-red-800">Art. 4 - Oralidad:</strong> Sustanciación por audiencias orales ante el juez.</div>
+                    <div><strong class="text-red-800">Art. 5 - Impulso procesal:</strong> Corresponde a las partes impulsar el proceso (sistema dispositivo).</div>
+                    <div><strong class="text-red-800">Art. 6 - Inmediación:</strong> El juez debe estar presente en audiencias y práctica de prueba.</div>
+                    <div><strong class="text-red-800">Art. 8 - Publicidad:</strong> Los procesos son públicos, salvo excepciones legales.</div>
+                    <div><strong class="text-red-800">Celeridad:</strong> Prohibición de justicia tardía, trámites breves.</div>
+                    <div><strong class="text-red-800">Concentración:</strong> Reunión de actos procesales en audiencias unificadas.</div>
+                    <div><strong class="text-red-800">Preclusión:</strong> Las etapas se cierran definitivamente.</div>
+                </div>
+            </div>
+
+            <!-- PROCEDIMIENTO ORDINARIO -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-procedimientos" data-category="procedimientos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-list-ol mr-2"></i>Procedimiento Ordinario
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Art. 289 - Procedencia:</strong> Para pretensiones sin trámite especial asignado.</div>
+                    <div><strong class="text-red-800">Plazo contestación:</strong> 30 días hábiles desde última citación (Art. 291).</div>
+                    <div><strong class="text-red-800">Audiencia preliminar:</strong> Entre 10-20 días de notificada (Art. 292).</div>
+                    <div><strong class="text-red-800">Contenido preliminar:</strong> Saneamiento, excepciones, fijación de puntos, conciliación.</div>
+                    <div><strong class="text-red-800">Audiencia de juicio:</strong> Máximo 30 días después de preliminar (Art. 297).</div>
+                    <div><strong class="text-red-800">Estructura:</strong> Demanda → Contestación → Audiencia preliminar → Audiencia juicio → Sentencia.</div>
+                    <div><strong class="text-red-800">Reforma demanda:</strong> Permitida antes de contestación.</div>
+                    <div><strong class="text-red-800">Reconvención:</strong> Permitida con contestación.</div>
+                </div>
+            </div>
+
+            <!-- PROCEDIMIENTO SUMARIO -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-procedimientos" data-category="procedimientos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-fast-forward mr-2"></i>Procedimiento Sumario
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Art. 332 - Procedencia:</strong> Posesorias, alimentos, divorcio contencioso, guardas, laborales específicos.</div>
+                    <div><strong class="text-red-800">Plazo contestación:</strong> 15 días (10 en niñez y adolescencia) - Art. 333.</div>
+                    <div><strong class="text-red-800">Reforma demanda:</strong> NO procede.</div>
+                    <div><strong class="text-red-800">Reconvención:</strong> Solo la conexa.</div>
+                    <div><strong class="text-red-800">Audiencia única:</strong> Máximo 30 días desde contestación.</div>
+                    <div><strong class="text-red-800">Fases audiencia:</strong> 1) Saneamiento/concentración, 2) Prueba/alegatos.</div>
+                    <div><strong class="text-red-800">Sentencia:</strong> Oral al finalizar audiencia.</div>
+                    <div><strong class="text-red-800">Característica:</strong> Mayor celeridad, menos formalidades.</div>
+                </div>
+            </div>
+
+            <!-- PROCEDIMIENTO EJECUTIVO -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-procedimientos" data-category="procedimientos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-gavel mr-2"></i>Procedimiento Ejecutivo
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Art. 347 - Títulos ejecutivos:</strong> Sentencias, transacciones, documentos públicos, privados reconocidos, etc.</div>
+                    <div><strong class="text-red-800">Art. 348 - Requisitos:</strong> Obligación clara, pura, determinada, exigible.</div>
+                    <div><strong class="text-red-800">Calificación:</strong> 3 días para calificar demanda (Art. 351).</div>
+                    <div><strong class="text-red-800">Contestación:</strong> Demandado puede: pagar, oponer excepciones, caucionar, reconvenir.</div>
+                    <div><strong class="text-red-800">Excepciones limitadas:</strong> Solo: título no ejecutivo, nulidad, falsedad, extinción, usura, excepciones previas.</div>
+                    <div><strong class="text-red-800">Sin contestación:</strong> Sentencia inmediata (Art. 352).</div>
+                    <div><strong class="text-red-800">Audiencia:</strong> Máximo 20 días si hay oposición.</div>
+                    <div><strong class="text-red-800">Apelación:</strong> Solo efecto no suspensivo.</div>
+                </div>
+            </div>
+
+            <!-- PROCEDIMIENTO MONITORIO -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-procedimientos" data-category="procedimientos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-dollar-sign mr-2"></i>Procedimiento Monitorio
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Art. 356 - Procedencia:</strong> Deudas líquidas, exigibles, hasta 50 salarios básicos, sin título ejecutivo.</div>
+                    <div><strong class="text-red-800">Documentos:</strong> Firma deudor, facturas, contratos, declaración jurada.</div>
+                    <div><strong class="text-red-800">Sin abogado:</strong> Si deuda ≤ 3 salarios básicos.</div>
+                    <div><strong class="text-red-800">Plazo pago:</strong> 15 días desde citación (Art. 358).</div>
+                    <div><strong class="text-red-800">Sin comparecencia:</strong> Cosa juzgada automática y ejecución.</div>
+                    <div><strong class="text-red-800">Con oposición:</strong> Audiencia única con pruebas.</div>
+                    <div><strong class="text-red-800">Finalidad:</strong> Cobro rápido de deudas menores.</div>
+                    <div><strong class="text-red-800">Ventaja:</strong> Proceso más ágil que ejecutivo.</div>
+                </div>
+            </div>
+
+            <!-- TÉRMINOS PROCESALES -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-terminos" data-category="terminos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-clock mr-2"></i>Términos Procesales
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Art. 73 - Término:</strong> Tiempo legal o judicial para actos procesales, en días hábiles.</div>
+                    <div><strong class="text-red-800">Art. 75 - Término legal:</strong> Irrenunciable e improrrogable.</div>
+                    <div><strong class="text-red-800">Art. 76 - Término judicial:</strong> Determinado por juez, modificable por acuerdo.</div>
+                    <div><strong class="text-red-800">Art. 77 - Inicio:</strong> Desde día hábil siguiente a última citación/notificación.</div>
+                    <div><strong class="text-red-800">Vencimiento:</strong> Último momento hábil de jornada laboral.</div>
+                    <div><strong class="text-red-800">Días hábiles:</strong> Excluye sábados, domingos y feriados.</div>
+                    <div><strong class="text-red-800">Cómputo común:</strong> Para todas las partes desde última notificación.</div>
+                </div>
+            </div>
+
+            <!-- PLAZOS ESPECÍFICOS -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-plazos" data-category="plazos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-calendar-alt mr-2"></i>Plazos Específicos
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Contestación Ordinario:</strong> 30 días hábiles</div>
+                    <div><strong class="text-red-800">Contestación Sumario:</strong> 15 días (10 en niñez)</div>
+                    <div><strong class="text-red-800">Audiencia preliminar:</strong> 10-20 días de notificada</div>
+                    <div><strong class="text-red-800">Audiencia juicio:</strong> Máximo 30 días post-preliminar</div>
+                    <div><strong class="text-red-800">Audiencia sumario:</strong> Máximo 30 días post-contestación</div>
+                    <div><strong class="text-red-800">Calificación ejecutivo:</strong> 3 días</div>
+                    <div><strong class="text-red-800">Audiencia ejecutivo:</strong> Máximo 20 días si hay oposición</div>
+                    <div><strong class="text-red-800">Pago monitorio:</strong> 15 días</div>
+                    <div><strong class="text-red-800">Abandono:</strong> 80 días de inactividad</div>
+                </div>
+            </div>
+
+            <!-- RESOLUCIONES JUDICIALES -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-terminos" data-category="terminos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-file-alt mr-2"></i>Resoluciones Judiciales
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Art. 88 - Providencia:</strong> Toda decisión judicial (autos o sentencias).</div>
+                    <div><strong class="text-red-800">Auto de sustanciación:</strong> Impulsa el proceso, no requiere motivación especial.</div>
+                    <div><strong class="text-red-800">Auto interlocutorio:</strong> Decide cuestión procesal importante, debe motivarse.</div>
+                    <div><strong class="text-red-800">Sentencia:</strong> Decisión definitiva sobre el fondo del asunto.</div>
+                    <div><strong class="text-red-800">Motivación:</strong> Obligatoria en autos interlocutorios y sentencias.</div>
+                    <div><strong class="text-red-800">Forma:</strong> Escritas u orales según el caso.</div>
+                    <div><strong class="text-red-800">Firmeza:</strong> Ejecutoriedad cuando no caben recursos.</div>
+                </div>
+            </div>
+
+            <!-- RECURSOS PROCESALES -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-terminos" data-category="terminos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-arrow-up mr-2"></i>Recursos Procesales
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Apelación:</strong> Contra sentencias y autos interlocutorios ante superior.</div>
+                    <div><strong class="text-red-800">Casación:</strong> Por motivos de derecho ante Corte Nacional (Arts. 266-278).</div>
+                    <div><strong class="text-red-800">Aclaración:</strong> Para corregir errores materiales o conceptos oscuros.</div>
+                    <div><strong class="text-red-800">Ampliación:</strong> Para puntos omitidos en la sentencia.</div>
+                    <div><strong class="text-red-800">Revocatoria:</strong> Ante mismo juez para autos de sustanciación.</div>
+                    <div><strong class="text-red-800">Efecto suspensivo:</strong> Paraliza ejecución hasta resolver recurso.</div>
+                    <div><strong class="text-red-800">Efecto no suspensivo:</strong> Permite ejecución inmediata.</div>
+                    <div><strong class="text-red-800">Recurso de hecho:</strong> Cuando se niega indebidamente apelación.</div>
+                </div>
+            </div>
+
+            <!-- ACTUACIONES PROCESALES -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-terminos" data-category="terminos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-clipboard-list mr-2"></i>Actuaciones Procesales
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Demanda:</strong> Acto inicial, requisitos Art. 141 (petitorio, hechos, fundamentos).</div>
+                    <div><strong class="text-red-800">Contestación:</strong> Respuesta del demandado, puede incluir excepciones.</div>
+                    <div><strong class="text-red-800">Reconvención:</strong> Contrademanda del demandado contra actor.</div>
+                    <div><strong class="text-red-800">Excepciones previas:</strong> Defensa formal (competencia, capacidad, etc.).</div>
+                    <div><strong class="text-red-800">Excepciones de fondo:</strong> Defensas sustantivas sobre el derecho.</div>
+                    <div><strong class="text-red-800">Allanamiento:</strong> Reconocimiento expreso de pretensiones.</div>
+                    <div><strong class="text-red-800">Desistimiento:</strong> Renuncia a la pretensión o recurso.</div>
+                    <div><strong class="text-red-800">Abandono:</strong> Inactividad por 80 días (Art. 245).</div>
+                </div>
+            </div>
+
+            <!-- AUDIENCIAS -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-terminos" data-category="terminos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-users mr-2"></i>Audiencias
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Audiencia preliminar:</strong> Saneamiento, excepciones, conciliación, fijación de puntos.</div>
+                    <div><strong class="text-red-800">Audiencia de juicio:</strong> Práctica de prueba, alegatos, sentencia.</div>
+                    <div><strong class="text-red-800">Audiencia única:</strong> En sumario: concentra todo el debate.</div>
+                    <div><strong class="text-red-800">Inmediación obligatoria:</strong> Presencia física del juez.</div>
+                    <div><strong class="text-red-800">Oralidad:</strong> Argumentación y práctica oral de pruebas.</div>
+                    <div><strong class="text-red-800">Publicidad:</strong> Salvo casos de reserva legal.</div>
+                    <div><strong class="text-red-800">Registro:</strong> Audio o videograbación obligatoria.</div>
+                    <div><strong class="text-red-800">Inasistencia:</strong> Consecuencias según quien falte.</div>
+                </div>
+            </div>
+
+            <!-- PRUEBA -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-terminos" data-category="terminos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-search mr-2"></i>Prueba
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Carga de la prueba:</strong> Quien alega debe probar (Art. 169).</div>
+                    <div><strong class="text-red-800">Anuncio probatorio:</strong> En demanda y contestación principalmente.</div>
+                    <div><strong class="text-red-800">Prueba documental:</strong> Documentos públicos y privados.</div>
+                    <div><strong class="text-red-800">Prueba testimonial:</strong> Declaración de testigos en audiencia.</div>
+                    <div><strong class="text-red-800">Prueba pericial:</strong> Dictamen de expertos acreditados.</div>
+                    <div><strong class="text-red-800">Inspección judicial:</strong> Reconocimiento directo del juez.</div>
+                    <div><strong class="text-red-800">Presunción judicial:</strong> Inferencia lógica del juez.</div>
+                    <div><strong class="text-red-800">Contradicción:</strong> Derecho a contradecir toda prueba.</div>
+                </div>
+            </div>
+
+            <!-- MEDIDAS CAUTELARES -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-terminos" data-category="terminos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-shield-alt mr-2"></i>Medidas Cautelares
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Providencias preventivas:</strong> Asegurar resultado del proceso.</div>
+                    <div><strong class="text-red-800">Embargo:</strong> Afectación de bienes para garantizar cumplimiento.</div>
+                    <div><strong class="text-red-800">Secuestro:</strong> Depósito judicial de bien litigioso.</div>
+                    <div><strong class="text-red-800">Prohibición de enajenar:</strong> Impide transferencia de inmuebles.</div>
+                    <div><strong class="text-red-800">Caución:</strong> Garantía que debe rendir quien solicita medida.</div>
+                    <div><strong class="text-red-800">Apremio personal:</strong> Medida coercitiva excepcional.</div>
+                    <div><strong class="text-red-800">Levantamiento:</strong> Cuando cesan los motivos o se cauciona.</div>
+                    <div><strong class="text-red-800">Responsabilidad:</strong> Por daños si medida resultare improcedente.</div>
+                </div>
+            </div>
+
+            <!-- EJECUCIÓN -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-terminos" data-category="terminos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-hammer mr-2"></i>Ejecución
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Ejecución de sentencias:</strong> Cumplimiento forzoso de lo decidido.</div>
+                    <div><strong class="text-red-800">Remate:</strong> Venta judicial de bienes embargados.</div>
+                    <div><strong class="text-red-800">Adjudicación:</strong> Transferencia judicial de dominio.</div>
+                    <div><strong class="text-red-800">Liquidación:</strong> Determinación del monto a ejecutar.</div>
+                    <div><strong class="text-red-800">Tercerías:</strong> Intervención de terceros (excluyente, coadyuvante).</div>
+                    <div><strong class="text-red-800">Orden de prelación:</strong> Preferencia en pagos según privilegios.</div>
+                    <div><strong class="text-red-800">Bienes inembargables:</strong> Protegidos por ley de ejecución.</div>
+                    <div><strong class="text-red-800">Concurso de acreedores:</strong> Múltiples acreedores sobre mismos bienes.</div>
+                </div>
+            </div>
+
+            <!-- NULIDADES Y VICIOS -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-terminos" data-category="terminos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Nulidades y Vicios
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Art. 107 - Nulidad:</strong> Por omisión de solemnidades sustanciales.</div>
+                    <div><strong class="text-red-800">Saneamiento:</strong> Convalidación de actos viciados.</div>
+                    <div><strong class="text-red-800">Nulidad absoluta:</strong> No admite convalidación (orden público).</div>
+                    <div><strong class="text-red-800">Nulidad relativa:</strong> Se sanea si no se alega oportunamente.</div>
+                    <div><strong class="text-red-800">Oportunidad:</strong> Al conocer el vicio, máximo en alzada.</div>
+                    <div><strong class="text-red-800">Efectos:</strong> Invalidez del acto y actuaciones posteriores.</div>
+                    <div><strong class="text-red-800">Renovación:</strong> Repetición del acto viciado correctamente.</div>
+                    <div><strong class="text-red-800">Principio de conservación:</strong> Se prefiere sanear que anular.</div>
+                </div>
+            </div>
+
+            <!-- CONCILIACIÓN Y TRANSACCIÓN -->
+            <div class="term-card bg-white rounded-lg shadow-lg p-6 border-l-4 category-terminos" data-category="terminos">
+                <h3 class="text-xl font-bold text-red-700 mb-3">
+                    <i class="fas fa-handshake mr-2"></i>Conciliación y Transacción
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div><strong class="text-red-800">Art. 233 - Oportunidad:</strong> En cualquier estado del proceso.</div>
+                    <div><strong class="text-red-800">Conciliación:</strong> Acuerdo facilitado por el juez.</div>
+                    <div><strong class="text-red-800">Transacción:</strong> Acuerdo directo entre partes con concesiones mutuas.</div>
+                    <div><strong class="text-red-800">Efectos:</strong> Equivale a sentencia ejecutoriada.</div>
+                    <div><strong class="text-red-800">Homologación:</strong> Aprobación judicial del acuerdo.</div>
+                    <div><strong class="text-red-800">Materias excluidas:</strong> No transigibles (estado civil, etc.).</div>
+                    <div><strong class="text-red-800">Ejecución:</strong> Directa en caso de incumplimiento.</div>
+                    <div><strong class="text-red-800">Registro:</strong> En acta de audiencia o documento separado.</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 pt-6 border-t-4 border-red-600">
+            <div class="bg-white rounded-lg p-6 shadow-lg">
+                <div class="flex justify-center items-center space-x-6 mb-4">
+                    <div class="text-red-600 text-3xl">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <div class="ecuador-flag w-16"></div>
+                    <div class="text-red-600 text-3xl">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                </div>
+                <p class="text-lg font-semibold text-red-800 mb-2">
+                    Universidad Bolivariana del Ecuador - Facultad de Jurisprudencia
+                </p>
+                <p class="text-sm text-red-600 mb-2">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Fuente: Código Orgánico General de Procesos (COGEP) - República del Ecuador
+                </p>
+                <p class="text-sm text-red-600">
+                    Corte Nacional de Justicia - Principales cuestiones en preguntas y respuestas
+                </p>
+                <p class="text-xs text-red-500 mt-3">
+                    Trabajo académico elaborado por el Grupo N.º 1 - 2024
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funcionalidad de búsqueda
+        const searchInput = document.getElementById('searchInput');
+        const contentGrid = document.getElementById('contentGrid');
+        const allCards = document.querySelectorAll('.term-card');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            allCards.forEach(card => {
+                const cardText = card.textContent.toLowerCase();
+                const hasMatch = cardText.includes(searchTerm);
+                
+                if (hasMatch && searchTerm !== '') {
+                    card.style.display = 'block';
+                    highlightText(card, searchTerm);
+                } else if (searchTerm === '') {
+                    card.style.display = 'block';
+                    removeHighlight(card);
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Filtrar por categoría
+        function filterByCategory(category) {
+            // Actualizar botón activo
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-offset-2', 'ring-red-300');
+            });
+            event.target.classList.add('ring-2', 'ring-offset-2', 'ring-red-300');
+
+            allCards.forEach(card => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Limpiar búsqueda al filtrar
+            searchInput.value = '';
+            allCards.forEach(card => removeHighlight(card));
+        }
+
+        // Resaltar términos de búsqueda
+        function highlightText(element, searchTerm) {
+            removeHighlight(element);
+            const walker = document.createTreeWalker(
+                element,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+
+            const textNodes = [];
+            let node;
+            while (node = walker.nextNode()) {
+                textNodes.push(node);
+            }
+
+            textNodes.forEach(textNode => {
+                const parent = textNode.parentNode;
+                if (parent.tagName !== 'SCRIPT' && parent.tagName !== 'STYLE') {
+                    const text = textNode.textContent;
+                    const regex = new RegExp(`(${searchTerm})`, 'gi');
+                    if (regex.test(text)) {
+                        const highlightedText = text.replace(regex, '<span class="search-highlight">$1</span>');
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = highlightedText;
+                        while (wrapper.firstChild) {
+                            parent.insertBefore(wrapper.firstChild, textNode);
+                        }
+                        parent.removeChild(textNode);
+                    }
+                }
+            });
+        }
+
+        // Remover resaltados
+        function removeHighlight(element) {
+            const highlights = element.querySelectorAll('.search-highlight');
+            highlights.forEach(highlight => {
+                const parent = highlight.parentNode;
+                parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+                parent.normalize();
+            });
+        }
+
+        // Inicializar con todas las categorías visibles
+        filterByCategory('all');
+    </script>
+</body>
+</html>
